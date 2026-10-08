@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CloudRide Transport Reservation</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #eef3f8;
+      color: #17202a;
+    }
+
+    header {
+      background: #123c69;
+      color: white;
+      padding: 22px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin-bottom: 8px;
+    }
+
+    .container {
+      width: 92%;
+      max-width: 1100px;
+      margin: 25px auto;
+    }
+
+    .card {
+      background: white;
+      padding: 22px;
+      margin-bottom: 22px;
+      border-radius: 12px;
+      box-shadow: 0 3px 12px #00000018;
+    }
+
+    .search-grid,
+    .booking-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    input,
+    select,
+    button {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid #ccd6e0;
+      border-radius: 6px;
+      font-size: 15px;
+    }
+
+    button {
+      background: #1677c8;
+      color: white;
+      cursor: pointer;
+      border: none;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #0d5fa3;
+    }
+
+    .danger {
+      background: #c0392b;
+    }
+
+    .success {
+      background: #16834d;
+    }
+
+    .transport-list {
+      display: grid;
+      gap: 15px;
+      margin-top: 18px;
+    }
+
+    .transport-item {
+      border: 1px solid #d4dde6;
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .transport-item h3 {
+      color: #123c69;
+      margin-bottom: 7px;
+    }
+
+    .transport-item button {
+      width: auto;
+      min-width: 140px;
+    }
+
+    .seat-layout {
+      display: grid;
+      grid-template-columns: repeat(4, 48px);
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    .seat {
+      width: 48px;
+      height: 42px;
+      background: #d8f3dc;
+      color: #14532d;
+      border: 1px solid #79b88c;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .seat.selected {
+      background: #f4b942;
+      color: #261900;
+      border-color: #bd8612;
+    }
+
+    .seat.booked {
+      background: #d9534f;
+      color: white;
+      border-color: #a52b28;
+      cursor: not-allowed;
+    }
+
+    .summary {
+      background: #f4f8fc;
+      border-left: 5px solid #1677c8;
+      padding: 15px;
+      margin-top: 15px;
+      line-height: 1.8;
+    }
+
+    .ticket {
+      display: none;
+      border: 2px dashed #1677c8;
+      padding: 22px;
+      background: #f8fcff;
+      line-height: 1.9;
+    }
+
+    .ticket h2 {
+      color: #123c69;
+      margin-bottom: 10px;
+    }
+
+    .message {
+      padding: 12px;
+      margin-top: 12px;
+      border-radius: 6px;
+      display: none;
+    }
+
+    .message.success-message {
+      background: #d9f7e5;
+      color: #146c3a;
+    }
+
+    .message.error-message {
+      background: #ffe0df;
+      color: #962c28;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+
+      #ticket,
+      #ticket * {
+        visibility: visible;
+      }
+
+      #ticket {
+        display: block;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>CloudRide Transport Reservation</h1>
+    <p>Search, reserve, and manage your transport tickets online</p>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>Search Transport</h2>
+      <br>
+
+      <div class="search-grid">
+        <div>
+          <label for="from">From</label>
+          <select id="from">
+            <option value="">Select starting point</option>
+            <option>Chennai</option>
+            <option>Bengaluru</option>
+            <option>Coimbatore</option>
+            <option>Madurai</option>
+            <option>Hyderabad</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="to">To</label>
+          <select id="to">
+            <option value="">Select destination</option>
+            <option>Chennai</option>
+            <option>Bengaluru</option>
+            <option>Coimbatore</option>
+            <option>Madurai</option>
+            <option>Hyderabad</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="travelDate">Travel Date</label>
+          <input type="date" id="travelDate">
+        </div>
+
+        <div>
+          <label>&nbsp;</label>
+          <button onclick="searchTransport()">Search Transport</button>
+        </div>
+      </div>
+
+      <div id="searchMessage" class="message"></div>
+    </section>
+
+    <section class="card">
+      <h2>Available Transport</h2>
+      <div id="transportList" class="transport-list">
+        <p>Enter travel details and click Search Transport.</p>
+      </div>
+    </section>
+
+    <section id="bookingSection" class="card" style="display: none;">
+      <h2>Passenger and Seat Details</h2>
+      <br>
+
+      <div class="summary" id="selectedTransport"></div>
+
+      <br>
+      <h3>Select Your Seat</h3>
+      <div id="seatLayout" class="seat-layout"></div>
+
+      <div class="booking-grid">
+        <div>
+          <label for="passengerName">Passenger Name</label>
+          <input type="text" id="passengerName" placeholder="Enter passenger name">
+        </div>
+
+        <div>
+          <label for="passengerPhone">Phone Number</label>
+          <input type="tel" id="passengerPhone" placeholder="Enter phone number">
+        </div>
+
+        <div>
+          <label for="passengerEmail">Email Address</label>
+          <input type="email" id="passengerEmail" placeholder="Enter email address">
+        </div>
+      </div>
+
+      <br>
+      <div class="summary">
+        <strong>Selected Seat:</strong>
+        <span id="selectedSeatText">None</span>
+        <br>
+        <strong>Total Fare:</strong>
+        ₹<span id="totalFare">0</span>
+      </div>
+
+      <br>
+      <button class="success" onclick="confirmBooking()">Confirm Reservation</button>
+      <div id="bookingMessage" class="message"></div>
+    </section>
+
+    <section id="ticket" class="ticket card">
+      <h2>CloudRide E-Ticket</h2>
+      <p><strong>Booking ID:</strong> <span id="ticketBookingId"></span></p>
+      <p><strong>Passenger:</strong> <span id="ticketPassenger"></span></p>
+      <p><strong>Phone:</strong> <span id="ticketPhone"></span></p>
+      <p><strong>Route:</strong> <span id="ticketRoute"></span></p>
+      <p><strong>Date:</strong> <span id="ticketDate"></span></p>
+      <p><strong>Transport:</strong> <span id="ticketTransport"></span></p>
+      <p><strong>Seat:</strong> <span id="ticketSeat"></span></p>
+      <p><strong>Total Fare:</strong> ₹<span id="ticketFare"></span></p>
+      <p><strong>Status:</strong> Confirmed</p>
+
+      <br>
+      <button onclick="window.print()">Print Ticket</button>
+      <button class="danger" onclick="cancelBooking()">Cancel Booking</button>
+    </section>
+  </main>
+
+  <script>
+    const transportData = [
+      {
+        id: 1,
+        name: "Chennai Express",
+        type: "AC Sleeper Bus",
+        from: "Chennai",
+        to: "Bengaluru",
+        departure: "06:30 AM",
+        arrival: "01:30 PM",
+        fare: 850,
+        bookedSeats: [2, 6, 11]
+      },
+      {
+        id: 2,
+        name: "South Star Travels",
+        type: "Non-AC Seater Bus",
+        from: "Chennai",
+        to: "Coimbatore",
+        departure: "08:00 AM",
+        arrival: "02:30 PM",
+        fare: 550,
+        bookedSeats: [1, 5, 9]
+      },
+      {
+        id: 3,
+        name: "Tamil Express",
+        type: "AC Seater Bus",
+        from: "Chennai",
+        to: "Madurai",
+        departure: "09:15 PM",
+        arrival: "05:30 AM",
+        fare: 750,
+        bookedSeats: [3, 7, 12]
+      },
+      {
+        id: 4,
+        name: "Deccan Travels",
+        type: "AC Sleeper Bus",
+        from: "Bengaluru",
+        to: "Hyderabad",
+        departure: "07:45 PM",
+        arrival: "07:00 AM",
+        fare: 1100,
+        bookedSeats: [4, 8, 10]
+      }
+    ];
+
+    let selectedTransport = null;
+    let selectedSeat = null;
+    let currentBooking = null;
+
+    document.getElementById("travelDate").min =
+      new Date().toISOString().split("T")[0];
+
+    function showMessage(elementId, text, type) {
+      const element = document.getElementById(elementId);
+      element.textContent = text;
+      element.className = "message " + type;
+      element.style.display = "block";
+    }
+
+    function searchTransport() {
+      const from = document.getElementById("from").value;
+      const to = document.getElementById("to").value;
+      const date = document.getElementById("travelDate").value;
+      const list = document.getElementById("transportList");
+
+      if (!from || !to || !date) {
+        showMessage(
+          "searchMessage",
+          "Please select starting point, destination, and travel date.",
+          "error-message"
+        );
+        return;
+      }
+
+      if (from === to) {
+        showMessage(
+          "searchMessage",
+          "Starting point and destination must be different.",
+          "error-message"
+        );
+        return;
+      }
+
+      const results = transportData.filter(
+        item => item.from === from && item.to === to
+      );
+
+      if (results.length === 0) {
+        list.innerHTML = "<p>No transport found for this route.</p>";
+        showMessage(
+          "searchMessage",
+          "Try another route.",
+          "error-message"
+        );
+        return;
+      }
+
+      showMessage(
+        "searchMessage",
+        results.length + " transport option found.",
+        "success-message"
+      );
+
+      list.innerHTML = results.map(item => `
+        <div class="transport-item">
+          <div>
+            <h3>${item.name}</h3>
+            <p><strong>Type:</strong> ${item.type}</p>
+            <p><strong>Time:</strong> ${item.departure} - ${item.arrival}</p>
+            <p><strong>Fare:</strong> ₹${item.fare}</p>
+            <p><strong>Available Seats:</strong> ${40 - item.bookedSeats.length}</p>
+          </div>
+          <button onclick="selectTransport(${item.id})">
+            Select
+          </button>
+        </div>
+      `).join("");
+    }
+
+    function selectTransport(id) {
+      selectedTransport = transportData.find(item => item.id === id);
+      selectedSeat = null;
+
+      document.getElementById("bookingSection").style.display = "block";
+
+      document.getElementById("selectedTransport").innerHTML = `
+        <strong>${selectedTransport.name}</strong><br>
+        ${selectedTransport.type}<br>
+        Route: ${selectedTransport.from} to ${selectedTransport.to}<br>
+        Time: ${selectedTransport.departure} - ${selectedTransport.arrival}<br>
+        Fare per seat: ₹${selectedTransport.fare}
+      `;
+
+      document.getElementById("selectedSeatText").textContent = "None";
+      document.getElementById("totalFare").textContent = "0";
+
+      createSeats(selectedTransport.bookedSeats);
+
+      document.getElementById("bookingSection").scrollIntoView({
+        behavior: "smooth"
+      });
+    }
+
+    function createSeats(bookedSeats) {
+      const seatLayout = document.getElementById("seatLayout");
+      seatLayout.innerHTML = "";
+
+      for (let seatNumber = 1; seatNumber <= 40; seatNumber++) {
+        const button = document.createElement("button");
+        button.textContent = seatNumber;
+        button.className = "seat";
+
+        if (bookedSeats.includes(seatNumber)) {
+          button.classList.add("booked");
+          button.disabled = true;
+        } else {
+          button.onclick = () => chooseSeat(seatNumber, button);
+        }
+
+        seatLayout.appendChild(button);
+      }
+    }
+
+    function chooseSeat(seatNumber, button) {
+      document.querySelectorAll(".seat.selected").forEach(seat => {
+        seat.classList.remove("selected");
+      });
+
+      selectedSeat = seatNumber;
+      button.classList.add("selected");
+
+      document.getElementById("selectedSeatText").textContent = seatNumber;
+      document.getElementById("totalFare").textContent =
+        selectedTransport.fare;
+    }
+
+    function confirmBooking() {
+      const name = document.getElementById("passengerName").value.trim();
+      const phone = document.getElementById("passengerPhone").value.trim();
+      const email = document.getElementById("passengerEmail").value.trim();
+      const date = document.getElementById("travelDate").value;
+
+      if (!name || !phone || !email || !selectedSeat) {
+        showMessage(
+          "bookingMessage",
+          "Please enter passenger details and select a seat.",
+          "error-message"
+        );
+        return;
+      }
+
+      if (!/^[0-9]{10}$/.test(phone)) {
+        showMessage(
+          "bookingMessage",
+          "Enter a valid 10-digit phone number.",
+          "error-message"
+        );
+        return;
+      }
+
+      const bookingId =
+        "CR" + Math.floor(100000 + Math.random() * 900000);
+
+      currentBooking = {
+        bookingId,
+        name,
+        phone,
+        email,
+        date,
+        seat: selectedSeat,
+        fare: selectedTransport.fare,
+        transport: selectedTransport.name,
+        route: `${selectedTransport.from} to ${selectedTransport.to}`
+      };
+
+      localStorage.setItem(
+        "cloudRideBooking",
+        JSON.stringify(currentBooking)
+      );
+
+      selectedTransport.bookedSeats.push(selectedSeat);
+
+      document.getElementById("ticketBookingId").textContent =
+        currentBooking.bookingId;
+      document.getElementById("ticketPassenger").textContent =
+        currentBooking.name;
+      document.getElementById("ticketPhone").textContent =
+        currentBooking.phone;
+      document.getElementById("ticketRoute").textContent =
+        currentBooking.route;
+      document.getElementById("ticketDate").textContent =
+        currentBooking.date;
+      document.getElementById("ticketTransport").textContent =
+        currentBooking.transport;
+      document.getElementById("ticketSeat").textContent =
+        currentBooking.seat;
+      document.getElementById("ticketFare").textContent =
+        currentBooking.fare;
+
+      document.getElementById("ticket").style.display = "block";
+
+      showMessage(
+        "bookingMessage",
+        "Reservation confirmed successfully.",
+        "success-message"
+      );
+
+      document.getElementById("ticket").scrollIntoView({
+        behavior: "smooth"
+      });
+    }
+
+    function cancelBooking() {
+      if (!currentBooking) {
+        alert("No active booking found.");
+        return;
+      }
+
+      const confirmation = confirm(
+        "Are you sure you want to cancel this booking?"
+      );
+
+      if (!confirmation) return;
+
+      selectedTransport.bookedSeats =
+        selectedTransport.bookedSeats.filter(
+          seat => seat !== currentBooking.seat
+        );
+
+      localStorage.removeItem("cloudRideBooking");
+      currentBooking = null;
+
+      document.getElementById("ticket").style.display = "none";
+      document.getElementById("bookingSection").style.display = "none";
+
+      alert("Booking cancelled successfully.");
+    }
+
+    window.onload = function () {
+      const savedBooking = localStorage.getItem("cloudRideBooking");
+
+      if (savedBooking) {
+        currentBooking = JSON.parse(savedBooking);
+      }
+    };
+  </script>
+</body>
+</html>
